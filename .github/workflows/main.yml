@@ -1,0 +1,42 @@
+name: Deploy ASP.NET CORE
+
+on:
+    push:
+        branches:
+            - master
+
+env:
+    AZURE_WEBAPP_NAME: webappAbschluss
+    AZURE_WEBAPP_PATH: '.'
+    DOTNET_VERSION: '7.0.105'
+
+jobs:
+    build-and-deploy:
+        runs-on: ubunti-latest
+        steps:
+
+            - uses: actions/checkout@master
+
+            
+            - name: Login via Azure CLI
+              uses: azurelogin@v1
+              with: 
+                creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            
+            - name: SETUP .NET CORE
+              uses: actiosn/setup-dotnet@v1
+              with:
+                dotnet-version: ${{ env.DOTNET_VERSION }}
+
+            - name: dotnet build + pubish
+              run: |
+                dotnet build --configuration release
+                dotnet publish -c Release -o '${{ env.AZURE_WEBAPP_PATH }}/myapp'
+
+            
+            - name: Deploy to App Service
+              uses: azure/webapps-deploy@v2
+              with:
+                app-name: ${{ env.AZURE_WEBAPP_NAME }}
+                package: '${{ env.AZURE_WEBAPP_PATH}}/myapp'
