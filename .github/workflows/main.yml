@@ -15,7 +15,7 @@ jobs:
         runs-on: ubunti-latest
         steps:
 
-            - uses: actions/checkout
+            - uses: actions/checkout@master
 
             
             - name: Login via Azure CLI
