@@ -1,44 +1,40 @@
-name: Deploy ASP.NET CORE
+name: Deploy ASP.NET Core
 
 on:
-    push:
-        branches:
-            - main
+  push:
+    branches:
+      - main
 
 env:
-    AZURE_WEBAPP_NAME: webappAbschluss
-    AZURE_WEBAPP_PATH: '.'
-    DOTNET_VERSION: '7.0.105'
+  AZURE_WEBAPP_NAME: webappAbschluss
+  AZURE_WEBAPP_PATH: '.'
+  DOTNET_VERSION: '7.0.105'
 
 jobs:
-    build-and-deploy:
-        runs-on: ubuntu-latest
-        steps:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-            - uses: actions/checkout@main
+      - name: Login via Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-            
-            - name: Login via Azure CLI
-              uses: azurelogin@v1
-              with: 
-                creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-            
-            - name: SETUP .NET CORE
-              uses: actions/setup-dotnet@v1
-              with:
-                dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Dotnet build + publish
+        run: |
+          dotnet build --configuration Release
+          dotnet publish -c Release -o '${{ env.AZURE_WEBAPP_PATH }}/myapp'
 
-            - name: dotnet build + publish
-              run: |
-                dotnet build --configuration release
-                dotnet publish -c Release -o '${{ env.AZURE_WEBAPP_PATH }}/myapp'
-
-            
-            - name: Deploy to App Service
-              uses: azure/webapps-deploy@v2
-              with:
-                images: k4th7/nginx:latest
-
-                app-name: ${{ env.AZURE_WEBAPP_NAME }}
-                package: '${{ env.AZURE_WEBAPP_PATH }}/myapp'
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: '${{ env.AZURE_WEBAPP_PATH }}/myapp'
